@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>世界模型结构图</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&display=swap">
+<style>
+:root{
+  /* 配色：只用 SciPalette 的 Blue-Red Diverging 11 级。蓝侧给画面、z、h，越往内部越深；红侧给动作、奖励、对答案，越要紧越深；中点的浅灰给方框和辅助量。文字和方框的线用中性深灰。 */
+  /* 版式：单栏学术图版。图例在上，分图自上而下，每个分图是一张横向流程图加一段说明。 */
+  --bg:#ffffff; --ink:#1f2227; --muted:#636870; --rule:#dcdfe3;
+  --mod-bg:#f7f7f7; --mod-line:#40444b; --mod-hover:#d1e5f0;
+  --img:#4393c3; --img-bg:#f7f7f7;
+  --z:#2166ac;   --z-bg:#d1e5f0;
+  --h:#053061;   --h-bg:#92c5de;
+  --a:#d6604d;   --a-bg:#fddbc7;
+  --r:#b2182b;   --r-bg:#f4a582;
+  --p:#d6604d;   --p-bg:#f7f7f7;
+  --n:#9aa0a8;   --n-bg:#f7f7f7;
+  --loss:#67001f;
+  --font:"Times New Roman",Times,"Kaiti SC","STKaiti","KaiTi","楷体","LXGW WenKai TC","Songti SC",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14171c; --ink:#e9ebee; --muted:#a0a6ae; --rule:#353a42;
+    --mod-bg:#252930; --mod-line:#b3b9c1; --mod-hover:#2c3a47;
+    --img:#d1e5f0; --img-bg:#32383e;
+    --z:#92c5de;   --z-bg:#193553;
+    --h:#4393c3;   --h-bg:#092a50;
+    --a:#fddbc7;   --a-bg:#4a2b2a;
+    --r:#f4a582;   --r-bg:#5b1723;
+    --p:#f4a582;   --p-bg:#2b2d32;
+    --n:#8a9099;   --n-bg:#2b2d32;
+    --loss:#d6604d;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14171c; --ink:#e9ebee; --muted:#a0a6ae; --rule:#353a42;
+  --mod-bg:#252930; --mod-line:#b3b9c1; --mod-hover:#2c3a47;
+  --img:#d1e5f0; --img-bg:#32383e;
+  --z:#92c5de;   --z-bg:#193553;
+  --h:#4393c3;   --h-bg:#092a50;
+  --a:#fddbc7;   --a-bg:#4a2b2a;
+  --r:#f4a582;   --r-bg:#5b1723;
+  --p:#f4a582;   --p-bg:#2b2d32;
+  --n:#8a9099;   --n-bg:#2b2d32;
+  --loss:#d6604d;
+  color-scheme:dark;
+}
+body{
+  margin:0;
+  background:var(--bg); color:var(--ink); font-family:var(--font);
+  font-size:17px; line-height:1.75;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:32px 72px;
+}
+.page{max-width:1080px; margin:0 auto; display:flex; flex-direction:column; gap:26px}
+header{display:flex; flex-direction:column; gap:10px}
+h1{font-size:31px; font-weight:400; line-height:1.3; margin:0; text-wrap:balance}
+.lede{margin:0; max-width:43em}
+.src{margin:0; color:var(--muted); font-size:14.5px}
+.site-nav{display:flex; flex-wrap:wrap; gap:4px 20px; font-size:15px; padding-bottom:12px; border-bottom:1px solid var(--rule)}
+.site-nav a{color:var(--muted); text-decoration:none}
+.site-nav a:hover{color:var(--ink); text-decoration:underline}
+.site-nav a[aria-current="page"]{color:var(--ink)}
+.toc{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.toc li{border-top:1px solid var(--rule); padding-block:20px; display:grid; grid-template-columns:4.5em minmax(0,1fr); gap:4px 20px}
+.toc li:last-child{border-bottom:1px solid var(--rule)}
+.toc .yr{color:var(--muted); font-size:16px; padding-top:3px}
+.toc h2{font-size:22px; font-weight:400; margin:0; line-height:1.4}
+.toc h2 a{color:var(--ink); text-decoration-thickness:1px; text-underline-offset:4px}
+.toc p{margin:0; font-size:16px; max-width:44em}
+.toc .who{color:var(--muted); font-size:14.5px}
+.toc .chg{grid-column:2}
+.toc .chg b{font-weight:400; color:var(--muted); margin-right:.5em}
+footer{color:var(--muted); font-size:14.5px}
+.m{font-family:"Times New Roman",Times,serif; font-size:1.07em; white-space:nowrap}
+.m i{font-style:italic}
+.m sub,.m sup{font-size:.7em; line-height:0}
+.ss{display:inline-flex; flex-direction:column; vertical-align:middle; font-size:.7em; line-height:1.1; margin:0 .12em 0 .04em}
+.eqs{margin:0; display:grid; grid-template-columns:max-content minmax(0,1fr); gap:3px 18px; max-width:52em; font-size:16px; align-items:baseline}
+.eqs dt{color:var(--muted)}
+.eqs dd{margin:0; overflow-x:auto}
+
+.legend{border-block:1px solid var(--rule); padding-block:16px; display:flex; flex-direction:column; gap:6px}
+.legend > p{margin:0 0 4px; font-size:15px; color:var(--muted)}
+.legend-group{display:flex; gap:0 18px; align-items:flex-start; flex-wrap:wrap}
+.legend-group h3{font-size:15px; font-weight:400; color:var(--muted); margin:0; flex:none; width:5.2em; line-height:46px}
+.legend-group ul{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:0 22px; flex:1; min-width:0}
+.legend-group li{display:flex; align-items:center; gap:6px; font-size:15px; line-height:1.4}
+.sw{flex:none; display:block}
+
+figure{margin:0; display:flex; flex-direction:column}
+figure > figcaption{font-size:16px; color:var(--muted); padding-bottom:14px}
+.panel{border-top:1px solid var(--rule); padding-block:24px; display:flex; flex-direction:column; gap:12px}
+.panel h2{font-size:20.5px; font-weight:400; margin:0; line-height:1.4}
+.panel h2 b{font-weight:700; margin-right:.45em}
+.scroll{overflow-x:auto}
+svg.fig{display:block; width:100%; min-width:820px; height:auto}
+.cap{margin:0; max-width:47em; font-size:16px}
+ol.cap{list-style:none; padding:0; display:flex; flex-direction:column; gap:2px}
+ol.cap li{display:flex; gap:.5em}
+ol.cap li > span:first-child{flex:none}
+
+.detail-body{display:flex; flex-direction:column; gap:12px}
+.detail-body p{margin:0; font-size:16px; max-width:52em}
+dialog{border:1px solid var(--rule); border-radius:8px; background:var(--bg); color:var(--ink);
+  font-family:var(--font); padding:18px 22px 20px; width:min(1100px, calc(100vw - 32px)); max-width:none; box-sizing:border-box}
+dialog::backdrop{background:rgba(10,12,16,.5)}
+.dlg-head{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:8px}
+.dlg-head h3{font-size:20px; font-weight:400; margin:0}
+#dlg-close{font:inherit; font-size:15px; color:var(--ink); background:var(--mod-bg); border:1px solid var(--rule);
+  border-radius:5px; padding:2px 14px; cursor:pointer}
+#dlg-close:hover{background:var(--mod-hover)}
+#dlg-close:focus-visible{outline:2px solid var(--z); outline-offset:2px}
+
+/* ---- 图里的画法 ---- */
+svg text{font-family:var(--font); fill:var(--ink)}
+.v{font-style:italic}
+.s{font-size:.72em}
+.t-sym{font-size:15px}
+.t-symc{font-size:13.5px}
+.t-dim{font-size:11px; fill:var(--muted)}
+.t-mod{font-size:14.5px}
+.t-sub{font-size:11px; fill:var(--muted)}
+.t-note,.t-lab,.t-cap{font-size:12.5px; fill:var(--muted)}
+.t-loss{font-size:12.5px; fill:var(--loss)}
+.t-op{font-size:12.5px}
+.t-step{font-size:15px}
+.t-head{font-size:14px}
+.t-vdim{font-size:12px}
+.t-plus{font-size:13px; fill:var(--muted)}
+.t-tag{font-size:10.5px; fill:var(--bg)}
+.ghost-t{opacity:.6}
+
+.pill{stroke-width:1.4; stroke-linejoin:round}
+.shade1{fill:var(--ink); fill-opacity:.06; stroke:none}
+.shade2{fill:var(--ink); fill-opacity:.15; stroke:none}
+.pill-in{fill:none; stroke-width:.9}
+.k-img{fill:var(--img-bg); stroke:var(--img)} .s-img{stroke:var(--img)}
+.k-z{fill:var(--z-bg); stroke:var(--z)}       .s-z{stroke:var(--z)}
+.k-h{fill:var(--h-bg); stroke:var(--h)}       .s-h{stroke:var(--h)}
+.k-a{fill:var(--a-bg); stroke:var(--a)}       .s-a{stroke:var(--a)}
+.k-r{fill:var(--r-bg); stroke:var(--r)}       .s-r{stroke:var(--r)}
+.k-p{fill:var(--p-bg); stroke:var(--p)}       .s-p{stroke:var(--p)}
+.k-n{fill:var(--n-bg); stroke:var(--n)}       .s-n{stroke:var(--n)}
+.ghost{stroke-dasharray:4 3; opacity:.6}
+.ghost-g{opacity:.5}
+.ghost-g .body,.ghost-g .op{stroke-dasharray:4 3}
+.grp{fill:none; stroke-width:1}
+
+.mod .body{fill:var(--mod-bg); stroke:var(--mod-line); stroke-width:1.3}
+.mod-env .body,.mod-proc .body{fill:var(--bg)}
+.mod-env .inner{fill:none; stroke:var(--mod-line); stroke-width:.9}
+.mod-proc .body{stroke-width:1}
+.is-train .body{stroke:var(--ink); stroke-width:2.8}
+.tag{fill:var(--mod-line)}
+.clickable{cursor:pointer; outline:none}
+.clickable:hover .body{fill:var(--mod-hover)}
+.clickable:focus-visible .body{stroke:var(--z); stroke-width:2.8}
+.op{fill:var(--bg); stroke:var(--mod-line); stroke-width:1.3}
+
+.ln{fill:none; stroke-width:1.6}
+.ln-img{stroke:var(--img)} .mk-img{fill:var(--img)}
+.ln-z{stroke:var(--z)}     .mk-z{fill:var(--z)}
+.ln-h{stroke:var(--h)}     .mk-h{fill:var(--h)}
+.ln-a{stroke:var(--a)}     .mk-a{fill:var(--a)}
+.ln-r{stroke:var(--r)}     .mk-r{fill:var(--r)}
+.ln-p{stroke:var(--p)}     .mk-p{fill:var(--p)}
+.ln-n{stroke:var(--n)}     .mk-n{fill:var(--n)}
+.ln-ink{stroke:var(--mod-line)} .mk-ink{fill:var(--mod-line)}
+.ln-loss{stroke:var(--loss)}    .mk-loss{fill:var(--loss)}
+.dash{stroke-dasharray:5 4}
+.ln-grad{stroke:var(--loss)} .mk-grad{fill:var(--loss)}
+.dots{stroke-dasharray:1 5.5; stroke-linecap:round; stroke-width:2.6}
+.frame{fill:none; stroke:var(--muted); stroke-width:1; stroke-dasharray:6 4}
+.ghost-ln{stroke-dasharray:4 3; opacity:.6}
+.sep{stroke:var(--rule); stroke-width:1; stroke-dasharray:2 5}
+</style>
+</head>
+<body>
+<main class="page">
+<nav class="site-nav" aria-label="三张图"><a href="index.html" aria-current="page">目录</a><a href="world-models.html">World Models</a><a href="planet.html">PlaNet</a><a href="dreamer.html">Dreamer v1</a></nav>
+<header>
+<h1>世界模型结构图</h1>
+<p class="lede">三篇隐空间世界模型论文的结构图：数据在模块之间怎么传，每个模块怎么训练。三张图用同一套画法，按发表顺序读，能看出每一篇在上一篇的基础上改了什么。</p>
+</header>
+<ol class="toc"><li><span class="yr">2018</span><div><h2><a href="world-models.html">World Models</a></h2><p class="who">Ha 与 Schmidhuber，World Models</p></div><p class="chg">V 把画面压成一小串数 <span class="m"><i>z</i></span>，M 记住历史并猜下一帧，C 根据两者给出动作。三个模块分开训练，C 用进化算法。</p></li><li><span class="yr">2019</span><div><h2><a href="planet.html">PlaNet</a></h2><p class="who">Hafner 等，Learning Latent Dynamics for Planning from Pixels</p></div><p class="chg">RSSM 把记忆 <span class="m"><i>h</i></span> 和随机的 <span class="m"><i>z</i></span> 合在一起往前推，先验负责猜，后验负责看图修正。不训练策略，每一步在模型里搜索动作。</p><p class="chg"><b>相对上一篇</b><span class="m"><i>z</i></span> 和 <span class="m"><i>h</i></span> 合成一个模型一起训练，并预测奖励；用在线规划代替 C。</p></li><li><span class="yr">2020</span><div><h2><a href="dreamer.html">Dreamer v1</a></h2><p class="who">Hafner 等，Dream to Control: Learning Behaviors by Latent Imagination</p></div><p class="chg">世界模型和 PlaNet 相同。策略网络和价值网络都在想象出来的轨迹上训练，策略的梯度穿过世界模型传回来。</p><p class="chg"><b>相对上一篇</b>用策略网络和价值网络代替规划，看得比 15 步更远，出动作也更快。</p></li></ol>
+<footer>图里的尺寸和超参数取自各篇论文的附录，并对照了官方代码。三张图都由同一个脚本生成。</footer>
+</main>
+</body>
+</html>
