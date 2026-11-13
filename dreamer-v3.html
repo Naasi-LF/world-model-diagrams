@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Dreamer v3 的改动</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC&display=swap">
+<style>
+:root{
+  /* 配色：只用 SciPalette 的 Blue-Red Diverging 11 级。蓝侧给画面、z、h，越往内部越深；红侧给动作、奖励、对答案，越要紧越深；中点的浅灰给方框和辅助量。文字和方框的线用中性深灰。 */
+  /* 版式：单栏学术图版。图例在上，分图自上而下，每个分图是一张横向流程图加一段说明。 */
+  --bg:#ffffff; --ink:#1f2227; --muted:#636870; --rule:#dcdfe3;
+  --mod-bg:#f7f7f7; --mod-line:#40444b; --mod-hover:#d1e5f0;
+  --img:#4393c3; --img-bg:#f7f7f7;
+  --z:#2166ac;   --z-bg:#d1e5f0;
+  --h:#053061;   --h-bg:#92c5de;
+  --a:#d6604d;   --a-bg:#fddbc7;
+  --r:#b2182b;   --r-bg:#f4a582;
+  --p:#d6604d;   --p-bg:#f7f7f7;
+  --n:#9aa0a8;   --n-bg:#f7f7f7;
+  --loss:#67001f;
+  --font:"Times New Roman",Times,"Kaiti SC","STKaiti","KaiTi","楷体","LXGW WenKai TC","Songti SC",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14171c; --ink:#e9ebee; --muted:#a0a6ae; --rule:#353a42;
+    --mod-bg:#252930; --mod-line:#b3b9c1; --mod-hover:#2c3a47;
+    --img:#d1e5f0; --img-bg:#32383e;
+    --z:#92c5de;   --z-bg:#193553;
+    --h:#4393c3;   --h-bg:#092a50;
+    --a:#fddbc7;   --a-bg:#4a2b2a;
+    --r:#f4a582;   --r-bg:#5b1723;
+    --p:#f4a582;   --p-bg:#2b2d32;
+    --n:#8a9099;   --n-bg:#2b2d32;
+    --loss:#d6604d;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14171c; --ink:#e9ebee; --muted:#a0a6ae; --rule:#353a42;
+  --mod-bg:#252930; --mod-line:#b3b9c1; --mod-hover:#2c3a47;
+  --img:#d1e5f0; --img-bg:#32383e;
+  --z:#92c5de;   --z-bg:#193553;
+  --h:#4393c3;   --h-bg:#092a50;
+  --a:#fddbc7;   --a-bg:#4a2b2a;
+  --r:#f4a582;   --r-bg:#5b1723;
+  --p:#f4a582;   --p-bg:#2b2d32;
+  --n:#8a9099;   --n-bg:#2b2d32;
+  --loss:#d6604d;
+  color-scheme:dark;
+}
+body{
+  margin:0;
+  background:var(--bg); color:var(--ink); font-family:var(--font);
+  font-size:17px; line-height:1.75;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:32px 72px;
+}
+.page{max-width:1080px; margin:0 auto; display:flex; flex-direction:column; gap:26px}
+header{display:flex; flex-direction:column; gap:10px}
+h1{font-size:31px; font-weight:400; line-height:1.3; margin:0; text-wrap:balance}
+.lede{margin:0; max-width:43em}
+.src{margin:0; color:var(--muted); font-size:14.5px}
+.site-nav{display:flex; flex-wrap:wrap; gap:4px 20px; font-size:15px; padding-bottom:12px; border-bottom:1px solid var(--rule)}
+.site-nav a{color:var(--muted); text-decoration:none}
+.site-nav a:hover{color:var(--ink); text-decoration:underline}
+.site-nav a[aria-current="page"]{color:var(--ink)}
+.toc{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+.toc li{border-top:1px solid var(--rule); padding-block:20px; display:grid; grid-template-columns:4.5em minmax(0,1fr); gap:4px 20px}
+.toc li:last-child{border-bottom:1px solid var(--rule)}
+.toc .yr{color:var(--muted); font-size:16px; padding-top:3px}
+.toc h2{font-size:22px; font-weight:400; margin:0; line-height:1.4}
+.toc h2 a{color:var(--ink); text-decoration-thickness:1px; text-underline-offset:4px}
+.toc p{margin:0; font-size:16px; max-width:44em}
+.toc .who{color:var(--muted); font-size:14.5px}
+.toc .chg{grid-column:2}
+.toc .chg b{font-weight:400; color:var(--muted); margin-right:.5em}
+footer{color:var(--muted); font-size:14.5px}
+.m{font-family:"Times New Roman",Times,serif; font-size:1.07em; white-space:nowrap}
+.m i{font-style:italic}
+.m sub,.m sup{font-size:.7em; line-height:0}
+.ss{display:inline-flex; flex-direction:column; vertical-align:middle; font-size:.7em; line-height:1.1; margin:0 .12em 0 .04em}
+.eqs{margin:0; display:grid; grid-template-columns:max-content minmax(0,1fr); gap:3px 18px; max-width:52em; font-size:16px; align-items:baseline}
+.eqs dt{color:var(--muted)}
+.eqs dd{margin:0; overflow-x:auto}
+
+.legend{border-block:1px solid var(--rule); padding-block:16px; display:flex; flex-direction:column; gap:6px}
+.legend > p{margin:0 0 4px; font-size:15px; color:var(--muted)}
+.legend-group{display:flex; gap:0 18px; align-items:flex-start; flex-wrap:wrap}
+.legend-group h3{font-size:15px; font-weight:400; color:var(--muted); margin:0; flex:none; width:5.2em; line-height:46px}
+.legend-group ul{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:0 22px; flex:1; min-width:0}
+.legend-group li{display:flex; align-items:center; gap:6px; font-size:15px; line-height:1.4}
+.sw{flex:none; display:block}
+
+figure{margin:0; display:flex; flex-direction:column}
+figure > figcaption{font-size:16px; color:var(--muted); padding-bottom:14px}
+.panel{border-top:1px solid var(--rule); padding-block:24px; display:flex; flex-direction:column; gap:12px}
+.panel h2{font-size:20.5px; font-weight:400; margin:0; line-height:1.4}
+.panel h2 b{font-weight:700; margin-right:.45em}
+.scroll{overflow-x:auto}
+svg.fig{display:block; width:100%; min-width:820px; height:auto}
+.cap{margin:0; max-width:47em; font-size:16px}
+ol.cap{list-style:none; padding:0; display:flex; flex-direction:column; gap:2px}
+ol.cap li{display:flex; gap:.5em}
+ol.cap li > span:first-child{flex:none}
+
+.detail-body{display:flex; flex-direction:column; gap:12px}
+.detail-body p{margin:0; font-size:16px; max-width:52em}
+dialog{border:1px solid var(--rule); border-radius:8px; background:var(--bg); color:var(--ink);
+  font-family:var(--font); padding:18px 22px 20px; width:min(1100px, calc(100vw - 32px)); max-width:none; box-sizing:border-box}
+dialog::backdrop{background:rgba(10,12,16,.5)}
+.dlg-head{display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:8px}
+.dlg-head h3{font-size:20px; font-weight:400; margin:0}
+#dlg-close{font:inherit; font-size:15px; color:var(--ink); background:var(--mod-bg); border:1px solid var(--rule);
+  border-radius:5px; padding:2px 14px; cursor:pointer}
+#dlg-close:hover{background:var(--mod-hover)}
+#dlg-close:focus-visible{outline:2px solid var(--z); outline-offset:2px}
+
+/* ---- 图里的画法 ---- */
+svg text{font-family:var(--font); fill:var(--ink)}
+.v{font-style:italic}
+.s{font-size:.72em}
+.t-sym{font-size:15px}
+.t-symc{font-size:13.5px}
+.t-dim{font-size:11px; fill:var(--muted)}
+.t-mod{font-size:14.5px}
+.t-sub{font-size:11px; fill:var(--muted)}
+.t-note,.t-lab,.t-cap{font-size:12.5px; fill:var(--muted)}
+.t-loss{font-size:12.5px; fill:var(--loss)}
+.t-op{font-size:12.5px}
+.t-step{font-size:15px}
+.t-head{font-size:14px}
+.t-vdim{font-size:12px}
+.t-plus{font-size:13px; fill:var(--muted)}
+.t-tag{font-size:10.5px; fill:var(--bg)}
+.ghost-t{opacity:.6}
+
+.pill{stroke-width:1.4; stroke-linejoin:round}
+.shade1{fill:var(--ink); fill-opacity:.06; stroke:none}
+.shade2{fill:var(--ink); fill-opacity:.15; stroke:none}
+.pill-in{fill:none; stroke-width:.9}
+.k-img{fill:var(--img-bg); stroke:var(--img)} .s-img{stroke:var(--img)}
+.k-z{fill:var(--z-bg); stroke:var(--z)}       .s-z{stroke:var(--z)}
+.k-h{fill:var(--h-bg); stroke:var(--h)}       .s-h{stroke:var(--h)}
+.k-a{fill:var(--a-bg); stroke:var(--a)}       .s-a{stroke:var(--a)}
+.k-r{fill:var(--r-bg); stroke:var(--r)}       .s-r{stroke:var(--r)}
+.k-p{fill:var(--p-bg); stroke:var(--p)}       .s-p{stroke:var(--p)}
+.k-n{fill:var(--n-bg); stroke:var(--n)}       .s-n{stroke:var(--n)}
+.ghost{stroke-dasharray:4 3; opacity:.6}
+.ghost-g{opacity:.5}
+.ghost-g .body,.ghost-g .op{stroke-dasharray:4 3}
+.grp{fill:none; stroke-width:1}
+
+.mod .body{fill:var(--mod-bg); stroke:var(--mod-line); stroke-width:1.3}
+.mod-env .body,.mod-proc .body{fill:var(--bg)}
+.mod-env .inner{fill:none; stroke:var(--mod-line); stroke-width:.9}
+.mod-proc .body{stroke-width:1}
+.is-train .body{stroke:var(--ink); stroke-width:2.8}
+.tag{fill:var(--mod-line)}
+.clickable{cursor:pointer; outline:none}
+.clickable:hover .body{fill:var(--mod-hover)}
+.clickable:focus-visible .body{stroke:var(--z); stroke-width:2.8}
+.op{fill:var(--bg); stroke:var(--mod-line); stroke-width:1.3}
+
+.ln{fill:none; stroke-width:1.6}
+.ln-img{stroke:var(--img)} .mk-img{fill:var(--img)}
+.ln-z{stroke:var(--z)}     .mk-z{fill:var(--z)}
+.ln-h{stroke:var(--h)}     .mk-h{fill:var(--h)}
+.ln-a{stroke:var(--a)}     .mk-a{fill:var(--a)}
+.ln-r{stroke:var(--r)}     .mk-r{fill:var(--r)}
+.ln-p{stroke:var(--p)}     .mk-p{fill:var(--p)}
+.ln-n{stroke:var(--n)}     .mk-n{fill:var(--n)}
+.ln-ink{stroke:var(--mod-line)} .mk-ink{fill:var(--mod-line)}
+.ln-loss{stroke:var(--loss)}    .mk-loss{fill:var(--loss)}
+.dash{stroke-dasharray:5 4}
+.ln-grad{stroke:var(--loss)} .mk-grad{fill:var(--loss)}
+.dots{stroke-dasharray:1 5.5; stroke-linecap:round; stroke-width:2.6}
+.cell{stroke-width:.7}
+.f-img{fill:var(--img)} .f-z{fill:var(--z)} .f-h{fill:var(--h)} .f-a{fill:var(--a)} .f-r{fill:var(--r)} .f-p{fill:var(--p)} .f-n{fill:var(--n)}
+.axis{stroke:var(--mod-line); stroke-width:1; fill:none}
+.sum h2{font-size:20.5px; font-weight:400; margin:0 0 6px}
+.sum table{border-collapse:collapse; width:100%; font-size:15.5px}
+.sum th,.sum td{text-align:left; padding:7px 20px 7px 0; border-bottom:1px solid var(--rule); vertical-align:top}
+.sum th{font-weight:400; color:var(--muted); white-space:nowrap}
+.sum td:first-child{white-space:nowrap}
+.sum td:last-child{white-space:nowrap; color:var(--muted); padding-right:0}
+.frame{fill:none; stroke:var(--muted); stroke-width:1; stroke-dasharray:6 4}
+.ghost-ln{stroke-dasharray:4 3; opacity:.6}
+.sep{stroke:var(--rule); stroke-width:1; stroke-dasharray:2 5}
+</style>
+</head>
+<body>
+<main class="page">
+<nav class="site-nav" aria-label="这一组图"><a href="index.html">目录</a><a href="world-models.html">World Models</a><a href="planet.html">PlaNet</a><a href="dreamer.html">Dreamer v1</a><a href="dreamer-v2.html">Dreamer v2 的改动</a><a href="dreamer-v3.html" aria-current="page">Dreamer v3 的改动</a></nav>
+<header>
+<h1>Dreamer v3 的改动</h1>
+<p class="lede">Dreamer v3 的结构和 v2 基本相同。它要解决的问题是：换一类任务就得重新调超参数。所以 v3 的改动几乎都是为了同一个目的：不管任务里的数值是大是小、奖励是密是疏，训练都稳，一套超参数跑所有任务。下面只画改动的地方，没提到的部分都和 v2 一样。</p>
+<p class="src">依据：Hafner 等，Mastering Diverse Domains through World Models，2023（arXiv:2301.04104，按 2024 年 4 月的修订版）和官方代码 danijar/dreamerv3。</p>
+</header>
+<section class="legend" aria-label="图例">
+<p>怎么读图。这一组图用的是同一套画法。</p>
+<div class="legend-group"><h3>数据</h3><ul><li><svg class="sw" viewBox="0 0 80 46" width="80" height="46" aria-hidden="true"><defs></defs><rect x="8" y="5" width="64" height="36" rx="18" class="pill k-img "/><text x="40" y="28" class="t-sym" text-anchor="middle"><tspan class="v">o</tspan></text></svg><span>画面（图像）</span></li><li><svg class="sw" viewBox="0 0 80 46" width="80" height="46" aria-hidden="true"><defs></defs><rect x="8" y="5" width="64" height="36" rx="18" class="pill k-z "/><text x="40" y="28" class="t-sym" text-anchor="middle"><tspan class="v">z</tspan></text></svg><span>画面压成的一小串数</span></li><li><svg class="sw" viewBox="0 0 80 46" width="80" height="46" aria-hidden="true"><defs></defs><rect x="8" y="5" width="64" height="36" rx="18" class="pill k-h "/><text x="40" y="28" class="t-sym" text-anchor="middle"><tspan class="v">h</tspan></text></svg><span>记忆</span></li><li><svg class="sw" viewBox="0 0 80 46" width="80" height="46" aria-hidden="true"><defs></defs><rect x="8" y="5" width="64" height="36" rx="18" class="pill k-a "/><text x="40" y="28" class="t-sym" text-anchor="middle"><tspan class="v">a</tspan></text></svg><span>动作</span></li><li><svg class="sw" viewBox="0 0 80 46" width="80" height="46" aria-hidden="true"><defs></defs><rect x="8" y="5" width="64" height="36" rx="18" class="pill k-r "/><text x="40" y="28" class="t-sym" text-anchor="middle"><tspan class="v">r</tspan></text></svg><span>奖励、分数</span></li><li><svg class="sw" viewBox="0 0 92 46" width="92" height="46" aria-hidden="true"><defs></defs><path d="M46,5 L26,5 A18,18 0 0 0 26,41 L46,41" class="pill k-h"/><path d="M46,5 L66,5 A18,18 0 0 1 66,41 L46,41" class="pill k-z"/><text x="46" y="28" class="t-sym" text-anchor="middle"><tspan class="v">s</tspan></text></svg><span>一步的完整状态：<span class="m"><i>h</i></span> 和 <span class="m"><i>z</i></span> 合在一起，共 230 个数</span></li><li><svg class="sw" viewBox="0 0 92 46" width="92" height="46" aria-hidden="true"><defs></defs><rect x="8" y="5" width="76" height="36" rx="18" class="pill k-z "/><rect x="11.5" y="8.5" width="69" height="29" rx="14.5" class="pill-in s-z "/><text x="46" y="28" class="t-sym" text-anchor="middle"><tspan class="v">P</tspan><tspan>(</tspan><tspan class="v">z</tspan><tspan>)</tspan></text></svg><span>双线：一个概率分布，采样后才是具体的数</span></li><li><svg class="sw" viewBox="0 0 92 46" width="92" height="46" aria-hidden="true"><defs></defs><rect x="8" y="5" width="76" height="36" rx="18" class="pill k-z ghost"/><rect x="11.5" y="8.5" width="69" height="29" rx="14.5" class="pill-in s-z ghost"/><text x="46" y="28" class="t-sym ghost-t" text-anchor="middle"><tspan class="v">P</tspan><tspan>(</tspan><tspan class="v">z</tspan><tspan>)</tspan></text></svg><span>虚线淡色：这一处用不到</span></li><li><svg class="sw" viewBox="0 0 82 46" width="82" height="46" aria-hidden="true"><defs></defs><rect x="7" y="13" width="17" height="20" class="cell s-z f-z" fill-opacity="0.08"/><rect x="24" y="13" width="17" height="20" class="cell s-z f-z" fill-opacity="0.75"/><rect x="41" y="13" width="17" height="20" class="cell s-z f-z" fill-opacity="0.25"/><rect x="58" y="13" width="17" height="20" class="cell s-z f-z" fill-opacity="0.05"/></svg><span>一排格子：每格一个概率，越深越大</span></li></ul></div><div class="legend-group"><h3>模块</h3><ul><li><svg class="sw" viewBox="0 0 92 46" width="92" height="46" aria-hidden="true"><defs></defs><g class="mod mod-net"><rect class="body" x="8" y="8" width="76" height="34" rx="5"/><text x="46" y="30" class="t-mod" text-anchor="middle"><tspan>网络</tspan></text></g></svg><span>神经网络</span></li><li><svg class="sw" viewBox="0 0 92 46" width="92" height="46" aria-hidden="true"><defs></defs><g class="mod mod-net is-train"><rect class="body" x="8" y="8" width="76" height="34" rx="5"/><text x="46" y="30" class="t-mod" text-anchor="middle"><tspan>网络</tspan></text></g></svg><span>粗框：这一步正在训练它</span></li><li><svg class="sw" viewBox="0 0 92 48" width="92" height="48" aria-hidden="true"><defs></defs><g class="mod mod-net"><rect class="body" x="8" y="11" width="76" height="32" rx="5"/><text x="46" y="32" class="t-mod" text-anchor="middle"><tspan>网络</tspan></text><rect class="tag" x="16" y="3" width="36" height="16" rx="3"/><text x="34" y="15" class="t-tag" text-anchor="middle">冻结</text></g></svg><span>冻结：参数不动，只拿来用</span></li><li><svg class="sw" viewBox="0 0 92 48" width="92" height="48" aria-hidden="true"><defs></defs><g class="mod mod-net"><rect class="body" x="8" y="11" width="76" height="32" rx="5"/><text x="46" y="32" class="t-mod" text-anchor="middle"><tspan>网络</tspan></text><rect class="tag" x="16" y="3" width="36" height="16" rx="3"/><text x="34" y="15" class="t-tag" text-anchor="middle">新增</text></g></svg><span>新增：这一版才有</span></li><li><svg class="sw" viewBox="0 0 92 46" width="92" height="46" aria-hidden="true"><defs></defs><g class="mod mod-net clickable" data-open="d-x" tabindex="0" role="button" aria-label="网络，点开看每一层"><rect class="body" x="8" y="8" width="76" height="34" rx="5"/><text x="46" y="30" class="t-mod" text-anchor="middle"><tspan>网络</tspan></text><text x="75" y="21" class="t-plus" text-anchor="middle">+</text></g></svg><span>右上角有 + ：可以点开看每一层</span></li><li><svg class="sw" viewBox="0 0 92 46" width="92" height="46" aria-hidden="true"><defs></defs><g class="mod mod-env"><rect class="body" x="8" y="7" width="76" height="36" rx="5"/><rect class="inner" x="12" y="11" width="68" height="28" rx="3"/><text x="46" y="30" class="t-mod" text-anchor="middle"><tspan>环境</tspan></text></g></svg><span>环境</span></li><li><svg class="sw" viewBox="0 0 92 46" width="92" height="46" aria-hidden="true"><defs></defs><g class="mod mod-proc"><rect class="body" x="8" y="8" width="76" height="34" rx="5"/><text x="46" y="30" class="t-mod" text-anchor="middle"><tspan>步骤</tspan></text></g></svg><span>不含参数的计算步骤</span></li></ul></div><div class="legend-group"><h3>操作和连线</h3><ul><li><svg class="sw" viewBox="0 0 40 46" width="40" height="46" aria-hidden="true"><defs></defs><g class="opg"><circle cx="20" cy="23" r="14" class="op"/><text x="20" y="27.5" class="t-op" text-anchor="middle">拼</text></g></svg><span>把几串数首尾拼成一串</span></li><li><svg class="sw" viewBox="0 0 40 46" width="40" height="46" aria-hidden="true"><defs></defs><g class="opg"><circle cx="20" cy="23" r="14" class="op"/><text x="20" y="27.5" class="t-op" text-anchor="middle">采</text></g></svg><span>按概率分布随机取一个值</span></li><li><svg class="sw" viewBox="0 0 82 46" width="82" height="46" aria-hidden="true"><defs><marker id="lg90-mk-z" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-z"/></marker></defs><path d="M6,23 L69.7,23" class="ln ln-z " marker-end="url(#lg90-mk-z)"/></svg><span>数据的流向，线的颜色跟数据一致</span></li><li><svg class="sw" viewBox="0 0 82 46" width="82" height="46" aria-hidden="true"><defs><marker id="lg91-mk-loss" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-loss"/></marker></defs><path d="M12.3,23 L69.7,23" class="ln ln-loss dash" marker-end="url(#lg91-mk-loss)" marker-start="url(#lg91-mk-loss)"/></svg><span>对答案：算误差，用来训练</span></li><li><svg class="sw" viewBox="0 0 82 46" width="82" height="46" aria-hidden="true"><defs><marker id="lg94-mk-loss" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-loss"/></marker></defs><path d="M76,23 L12.3,23" class="ln ln-loss dash" marker-end="url(#lg94-mk-loss)" style="stroke-width:3"/></svg><span>单向：起点一方去靠近终点一方，越粗力度越大</span></li><li><svg class="sw" viewBox="0 0 82 46" width="82" height="46" aria-hidden="true"><defs><marker id="lg96-mk-grad" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-grad"/></marker></defs><path d="M76,23 L12.3,23" class="ln ln-grad dots" marker-end="url(#lg96-mk-grad)"/></svg><span>点线：梯度往回传的方向</span></li></ul></div>
+</section>
+<section class="sum"><h2>改了什么</h2><div class="scroll"><table><thead><tr><th>哪一处</th><th>v2</th><th>v3</th><th>见</th></tr></thead><tbody><tr><td>画面的误差</td><td>平方误差</td><td>先过 symlog 再算平方误差</td><td>(a)</td></tr><tr><td>奖励、价值的输出</td><td>一个数；奖励先过 tanh</td><td>255 个格子上的概率</td><td>(b)</td></tr><tr><td>先验和后验的误差</td><td>KL 平衡 0.8 比 0.2，整体系数随任务调</td><td>拆成两项，权重 1 和 0.1，小于 1 不再推</td><td>(c)</td></tr><tr><td>分类分布</td><td>直接用网络的输出</td><td>混入 1% 的均匀分布</td><td>(d)</td></tr><tr><td>策略的梯度</td><td>两条路混合，比例随任务调</td><td>只用不穿过模型的那条，分数先按回报的范围归一化</td><td>(e)</td></tr><tr><td>熵的权重</td><td>随任务调</td><td>固定为 <span class="m">3 × 10<sup>−4</sup></span></td><td>(e)</td></tr><tr><td>价值的目标</td><td>用慢一拍的拷贝算目标</td><td>用现在的网络算目标，再向慢拷贝的输出靠拢</td><td>(f)</td></tr><tr><td>超参数</td><td>每类任务调一套</td><td>所有任务用同一套</td><td>—</td></tr></tbody></table></div></section>
+<figure>
+<figcaption>图 5　Dreamer v3 相对 v2 的改动。每个分图对应上表的一行。</figcaption>
+<section class="panel"><h2><b>(a)</b>symlog：把大小悬殊的数压到差不多的范围</h2><div class="scroll"><svg class="fig" viewBox="0 0 1000 284" role="img" aria-label="symlog：左边是函数曲线，越大的数被压得越厉害；右边是用法：真实值先过 symlog 再当作目标，网络的输出过 symexp 还原成最终的预测。"><defs><marker id="a-mk-loss" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-loss"/></marker><marker id="a-mk-r" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-r"/></marker></defs><line x1="25" y1="148" x2="355" y2="148" class="axis"/><line x1="190" y1="36" x2="190" y2="260" class="axis"/><line x1="182.5" y1="253.0" x2="197.5" y2="43.0" class="sep"/><polyline points="40.0,244.9 43.0,244.5 46.0,244.1 49.0,243.6 52.0,243.2 55.0,242.7 58.0,242.3 61.0,241.8 64.0,241.3 67.0,240.8 70.0,240.3 73.0,239.8 76.0,239.2 79.0,238.7 82.0,238.1 85.0,237.5 88.0,236.9 91.0,236.3 94.0,235.7 97.0,235.0 100.0,234.3 103.0,233.6 106.0,232.9 109.0,232.2 112.0,231.4 115.0,230.6 118.0,229.7 121.0,228.9 124.0,227.9 127.0,227.0 130.0,226.0 133.0,224.9 136.0,223.8 139.0,222.7 142.0,221.4 145.0,220.1 148.0,218.7 151.0,217.2 154.0,215.6 157.0,213.8 160.0,211.9 163.0,209.8 166.0,207.5 169.0,204.9 172.0,201.9 175.0,198.4 178.0,194.1 181.0,188.9 184.0,181.8 187.0,171.1 190.0,148.0 193.0,124.9 196.0,114.2 199.0,107.1 202.0,101.9 205.0,97.6 208.0,94.1 211.0,91.1 214.0,88.5 217.0,86.2 220.0,84.1 223.0,82.2 226.0,80.4 229.0,78.8 232.0,77.3 235.0,75.9 238.0,74.6 241.0,73.3 244.0,72.2 247.0,71.1 250.0,70.0 253.0,69.0 256.0,68.1 259.0,67.1 262.0,66.3 265.0,65.4 268.0,64.6 271.0,63.8 274.0,63.1 277.0,62.4 280.0,61.7 283.0,61.0 286.0,60.3 289.0,59.7 292.0,59.1 295.0,58.5 298.0,57.9 301.0,57.3 304.0,56.8 307.0,56.2 310.0,55.7 313.0,55.2 316.0,54.7 319.0,54.2 322.0,53.7 325.0,53.3 328.0,52.8 331.0,52.4 334.0,51.9 337.0,51.5 340.0,51.1" class="ln ln-r" style="stroke-width:2"/><path d="M835,84 L801.3,84" class="ln ln-r " marker-end="url(#a-mk-r)"/><path d="M705,84 L666.3,84" class="ln ln-r " marker-end="url(#a-mk-r)"/><path d="M498,200 L533.7,200" class="ln ln-r " marker-end="url(#a-mk-r)"/><path d="M660,200 L698.7,200" class="ln ln-r " marker-end="url(#a-mk-r)"/><path d="M795,200 L828.7,200" class="ln ln-r " marker-end="url(#a-mk-r)"/><path d="M600,111.3 L600,172.7" class="ln ln-loss dash" marker-end="url(#a-mk-loss)" marker-start="url(#a-mk-loss)"/><circle cx="205.0" cy="97.6" r="3" class="mk-r"/><circle cx="340.0" cy="51.1" r="3" class="mk-r"/><circle cx="40.0" cy="244.9" r="3" class="mk-r"/><rect x="835" y="63" width="130" height="42" rx="21" class="pill k-r "/><g class="mod mod-proc"><rect class="body" x="705" y="62" width="90" height="44" rx="5"/><text x="750" y="81" class="t-mod" text-anchor="middle"><tspan>symlog</tspan></text><text x="750" y="99" class="t-sub" text-anchor="middle"><tspan>压一压</tspan></text></g><rect x="540" y="63" width="120" height="42" rx="21" class="pill k-r "/><g class="mod mod-net"><rect class="body" x="422" y="178" width="76" height="44" rx="5"/><text x="460" y="205" class="t-mod" text-anchor="middle"><tspan>网络</tspan></text></g><rect x="540" y="179" width="120" height="42" rx="21" class="pill k-r "/><g class="mod mod-proc"><rect class="body" x="705" y="178" width="90" height="44" rx="5"/><text x="750" y="197" class="t-mod" text-anchor="middle"><tspan>symexp</tspan></text><text x="750" y="215" class="t-sub" text-anchor="middle"><tspan>还原回去</tspan></text></g><rect x="835" y="179" width="130" height="42" rx="21" class="pill k-r "/><text x="358" y="152" class="t-lab" text-anchor="start"><tspan class="v">x</tspan></text><text x="190" y="30" class="t-lab" text-anchor="middle"><tspan>symlog</tspan><tspan>(</tspan><tspan class="v">x</tspan><tspan>)</tspan></text><text x="213.0" y="111.6" class="t-dim" text-anchor="start">10 → 2.4</text><text x="336.0" y="42.4" class="t-dim" text-anchor="end">100 → 4.6</text><text x="44.0" y="261.6" class="t-dim" text-anchor="start">−100 → −4.6</text><text x="204" y="52" class="t-dim" text-anchor="start">不压的话（虚线）</text><text x="900" y="82" class="t-sym" text-anchor="middle"><tspan class="v">y</tspan></text><text x="900" y="96.18" class="t-dim" text-anchor="middle"><tspan>真实值，可大可小</tspan></text><text x="600" y="82" class="t-symc" text-anchor="middle"><tspan>目标</tspan></text><text x="600" y="96.18" class="t-dim" text-anchor="middle"><tspan>symlog</tspan><tspan>(</tspan><tspan class="v">y</tspan><tspan>)</tspan></text><text x="600" y="198" class="t-sym" text-anchor="middle"><tspan class="v">f</tspan></text><text x="600" y="212.2" class="t-dim" text-anchor="middle"><tspan>网络的输出</tspan></text><text x="900" y="198" class="t-sym" text-anchor="middle"><tspan class="v">ŷ</tspan></text><text x="900" y="212.2" class="t-dim" text-anchor="middle"><tspan>最终的预测</tspan></text><text x="612" y="146" class="t-loss" text-anchor="start"><tspan>对答案（平方误差）</tspan></text><text x="690" y="262" class="t-note" text-anchor="middle"><tspan>例：1000 压成 6.9，1 压成 0.69，−1000 压成 −6.9</tspan></text></svg></div><p class="cap">不同任务里数值的大小差别很大：有的奖励是 0.1，有的是 1000。直接用平方误差，大的数会让训练发散。symlog 对正数和负数都取对数：小的数基本不变，大的数被压得很厉害。网络学的是压过之后的值，用的时候再用 symexp 还原。v3 把它用在画面的重建上；输入是一串数（而不是图像）时，输入也先过 symlog。</p><dl class="eqs"><dt>压</dt><dd><span class="m">symlog(<i>x</i>) = sign(<i>x</i>) · ln(|<i>x</i>| + 1)</span></dd><dt>还原</dt><dd><span class="m">symexp(<i>x</i>) = sign(<i>x</i>) · (<i>e</i><sup>|<i>x</i>|</sup> − 1)</span></dd><dt>误差</dt><dd><span class="m"><i>L</i> = ½ (<i>f</i> − symlog(<i>y</i>))<sup>2</sup></span>，<span class="m"><i>ŷ</i> = symexp(<i>f</i>)</span></dd></dl></section><section class="panel"><h2><b>(b)</b>two-hot：奖励和价值不再输出一个数，而是输出一排格子上的概率</h2><div class="scroll"><svg class="fig" viewBox="0 0 1000 262" role="img" aria-label="two-hot：真实值落在两个相邻的格子之间，离哪格近哪格的分量就大；网络输出每个格子的概率，和它对答案；最终的预测是格子位置的加权平均。"><defs><marker id="b-mk-loss" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-loss"/></marker><marker id="b-mk-r" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-r"/></marker></defs><path d="M165,72 L243.7,72" class="ln ln-r " marker-end="url(#b-mk-r)"/><path d="M180,176 L238.7,176" class="ln ln-r " marker-end="url(#b-mk-r)"/><path d="M761,176 L791.7,176" class="ln ln-r " marker-end="url(#b-mk-r)"/><path d="M878,176 L902.7,176" class="ln ln-r " marker-end="url(#b-mk-r)"/><path d="M503,92.3 L503,150.7" class="ln ln-loss dash" marker-end="url(#b-mk-loss)" marker-start="url(#b-mk-loss)"/><rect x="55" y="51" width="110" height="42" rx="21" class="pill k-r "/><rect x="250" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="296" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="342" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="388" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="434" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="480" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="526" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="572" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.72"/><rect x="618" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.28"/><rect x="664" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="710" y="58" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><g class="mod mod-net"><rect class="body" x="40" y="152" width="140" height="48" rx="5"/><text x="110" y="181" class="t-mod" text-anchor="middle"><tspan>奖励或价值网络</tspan></text></g><rect x="245" y="157" width="516" height="38" rx="5" class="grp s-r"/><rect x="248" y="160" width="510" height="32" rx="3" class="grp s-r"/><rect x="250" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="296" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="342" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="388" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="434" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><rect x="480" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.04"/><rect x="526" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.12"/><rect x="572" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.50"/><rect x="618" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.28"/><rect x="664" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.06"/><rect x="710" y="162" width="46" height="28" class="cell s-r f-r" fill-opacity="0.00"/><g class="mod mod-proc"><rect class="body" x="798" y="156" width="80" height="40" rx="5"/><text x="838" y="181" class="t-mod" text-anchor="middle"><tspan>加权平均</tspan></text></g><rect x="909" y="158" width="70" height="36" rx="18" class="pill k-r "/><text x="110" y="70" class="t-sym" text-anchor="middle"><tspan class="v">y</tspan><tspan> = 10</tspan></text><text x="110" y="84.18" class="t-dim" text-anchor="middle"><tspan>真实值</tspan></text><text x="944" y="181" class="t-sym" text-anchor="middle"><tspan class="v">ŷ</tspan></text><text x="503" y="22" class="t-cap" text-anchor="middle"><tspan>目标：只有相邻两格不是 0，离哪格近哪格就大</tspan></text><text x="595" y="49" class="t-lab" text-anchor="middle"><tspan>0.72</tspan></text><text x="641" y="49" class="t-lab" text-anchor="middle"><tspan>0.28</tspan></text><text x="515" y="124" class="t-loss" text-anchor="start"><tspan>对答案（交叉熵）</tspan></text><text x="273" y="213" class="t-dim" text-anchor="middle"><tspan>−147</tspan></text><text x="319" y="213" class="t-dim" text-anchor="middle"><tspan>−53.6</tspan></text><text x="365" y="213" class="t-dim" text-anchor="middle"><tspan>−19.1</tspan></text><text x="411" y="213" class="t-dim" text-anchor="middle"><tspan>−6.4</tspan></text><text x="457" y="213" class="t-dim" text-anchor="middle"><tspan>−1.7</tspan></text><text x="503" y="213" class="t-dim" text-anchor="middle"><tspan>0</tspan></text><text x="549" y="213" class="t-dim" text-anchor="middle"><tspan>1.7</tspan></text><text x="595" y="213" class="t-dim" text-anchor="middle"><tspan>6.4</tspan></text><text x="641" y="213" class="t-dim" text-anchor="middle"><tspan>19.1</tspan></text><text x="687" y="213" class="t-dim" text-anchor="middle"><tspan>53.6</tspan></text><text x="733" y="213" class="t-dim" text-anchor="middle"><tspan>147</tspan></text><text x="503" y="244" class="t-note" text-anchor="middle"><tspan>格子的位置（示意）：越往两头越稀。实际有 255 格，从 symexp(−20) 到 symexp(20)</tspan></text></svg></div><p class="cap">奖励和回报常常有随机性，也可能有好几种典型的取值，只输出一个数表达不了。v3 让奖励网络和价值网络输出 255 个格子上的概率，格子的位置按 symexp 排开，所以小数值附近密、大数值附近稀。真实值被写成 two-hot：只有它左右相邻的两个格子不是 0。对答案用交叉熵，它只看概率，不看数值大小，所以梯度的大小不随奖励的尺度变。</p><dl class="eqs"><dt>格子</dt><dd><span class="m"><i>B</i> = symexp([−20, …, +20])</span>，共 255 格</dd><dt>预测</dt><dd><span class="m"><i>ŷ</i> = softmax(<i>f</i>)<sup><i>T</i></sup> <i>B</i></span>，即格子位置按概率加权平均</dd><dt>误差</dt><dd>网络给的概率和 two-hot 目标之间的交叉熵</dd></dl></section><section class="panel"><h2><b>(c)</b>先验和后验的误差：拆成两项，各有固定的权重</h2><div class="scroll"><svg class="fig" viewBox="0 0 1000 240" role="img" aria-label="先验和后验的误差：v2 里两个方向合成一项；v3 里拆成两项，权重分别是 1 和 0.1，而且差距小于 1 就不再推。"><defs><marker id="c-mk-loss" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-loss"/></marker></defs><path d="M575,63 L321.3,63" class="ln ln-loss dash" marker-end="url(#c-mk-loss)" style="stroke-width:3.4"/><path d="M315,81 L568.7,81" class="ln ln-loss dash" marker-end="url(#c-mk-loss)" style="stroke-width:1.2"/><path d="M575,179 L321.3,179" class="ln ln-loss dash" marker-end="url(#c-mk-loss)" style="stroke-width:3.4"/><path d="M315,197 L568.7,197" class="ln ln-loss dash" marker-end="url(#c-mk-loss)" style="stroke-width:1"/><rect x="185" y="50" width="130" height="44" rx="22" class="pill k-z "/><rect x="188.5" y="53.5" width="123" height="37" rx="18.5" class="pill-in s-z "/><rect x="575" y="50" width="130" height="44" rx="22" class="pill k-z "/><rect x="578.5" y="53.5" width="123" height="37" rx="18.5" class="pill-in s-z "/><rect x="185" y="166" width="130" height="44" rx="22" class="pill k-z "/><rect x="188.5" y="169.5" width="123" height="37" rx="18.5" class="pill-in s-z "/><rect x="575" y="166" width="130" height="44" rx="22" class="pill k-z "/><rect x="578.5" y="169.5" width="123" height="37" rx="18.5" class="pill-in s-z "/><text x="22" y="36" class="t-head" text-anchor="start"><tspan>v2</tspan></text><text x="250" y="70" class="t-symc" text-anchor="middle"><tspan>后验 </tspan><tspan class="v">q</tspan></text><text x="250" y="84.76" class="t-dim" text-anchor="middle"><tspan>看了画面</tspan></text><text x="640" y="70" class="t-symc" text-anchor="middle"><tspan>先验 </tspan><tspan class="v">p</tspan></text><text x="640" y="84.76" class="t-dim" text-anchor="middle"><tspan>只凭记忆</tspan></text><text x="445" y="54" class="t-loss" text-anchor="middle"><tspan>先验去靠近后验，力度 0.8</tspan></text><text x="445" y="103" class="t-loss" text-anchor="middle"><tspan>后验去靠近先验，力度 0.2</tspan></text><text x="728" y="76" class="t-note" text-anchor="start"><tspan>合成一项，再乘一个随任务调的系数</tspan></text><text x="22" y="152" class="t-head" text-anchor="start"><tspan>v3</tspan></text><text x="250" y="186" class="t-symc" text-anchor="middle"><tspan>后验 </tspan><tspan class="v">q</tspan></text><text x="250" y="200.8" class="t-dim" text-anchor="middle"><tspan>看了画面</tspan></text><text x="640" y="186" class="t-symc" text-anchor="middle"><tspan>先验 </tspan><tspan class="v">p</tspan></text><text x="640" y="200.8" class="t-dim" text-anchor="middle"><tspan>只凭记忆</tspan></text><text x="445" y="170" class="t-loss" text-anchor="middle"><tspan>先验去靠近后验，权重 1</tspan></text><text x="445" y="219" class="t-loss" text-anchor="middle"><tspan>后验去靠近先验，权重 0.1</tspan></text><text x="728" y="192" class="t-note" text-anchor="start"><tspan>分成两项；差距小于 1 就不再推</tspan></text></svg></div><p class="cap">v2 把两个方向按 0.8 比 0.2 合成一项，前面再乘一个系数，这个系数要按任务调：画面简单的任务和画面复杂的任务需要的不一样。v3 把两项彻底分开，权重固定为 1 和 0.1，并且每一项在小于 1 的时候就不再往下推。这样两个分布已经足够接近时，训练的力气就都用在重建和预测奖励上，不同任务不用再调系数。</p><dl class="eqs"><dt>先验一侧</dt><dd><span class="m">max(1, KL(sg(<i>q</i>) ‖ <i>p</i>))</span>，权重 1</dd><dt>后验一侧</dt><dd><span class="m">max(1, KL(<i>q</i> ‖ sg(<i>p</i>)))</span>，权重 0.1</dd></dl></section><section class="panel"><h2><b>(d)</b>混入 1% 的均匀分布：概率永远不会是 0</h2><div class="scroll"><svg class="fig" viewBox="0 0 1000 200" role="img" aria-label="均匀混合：把网络给的概率和均匀分布按 99 比 1 混在一起，得到的概率没有哪一格是 0。"><defs><marker id="d-mk-z" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-z"/></marker></defs><path d="M395,60 L473,60 Q480,60 480,67 L480,83.7" class="ln ln-z " marker-end="url(#d-mk-z)"/><path d="M395,148 L473,148 Q480,148 480,141 L480,124.3" class="ln ln-z " marker-end="url(#d-mk-z)"/><path d="M494,104 L558.7,104" class="ln ln-z " marker-end="url(#d-mk-z)"/><rect x="145" y="41" width="250" height="38" rx="5" class="grp s-z"/><rect x="148" y="44" width="244" height="32" rx="3" class="grp s-z"/><rect x="150" y="46" width="30" height="28" class="cell s-z f-z" fill-opacity="0.00"/><rect x="180" y="46" width="30" height="28" class="cell s-z f-z" fill-opacity="0.00"/><rect x="210" y="46" width="30" height="28" class="cell s-z f-z" fill-opacity="1.00"/><rect x="240" y="46" width="30" height="28" class="cell s-z f-z" fill-opacity="0.00"/><rect x="270" y="46" width="30" height="28" class="cell s-z f-z" fill-opacity="0.00"/><rect x="300" y="46" width="30" height="28" class="cell s-z f-z" fill-opacity="0.00"/><rect x="330" y="46" width="30" height="28" class="cell s-z f-z" fill-opacity="0.00"/><rect x="360" y="46" width="30" height="28" class="cell s-z f-z" fill-opacity="0.00"/><rect x="145" y="129" width="250" height="38" rx="5" class="grp s-z"/><rect x="148" y="132" width="244" height="32" rx="3" class="grp s-z"/><rect x="150" y="134" width="30" height="28" class="cell s-z f-z" fill-opacity="0.13"/><rect x="180" y="134" width="30" height="28" class="cell s-z f-z" fill-opacity="0.13"/><rect x="210" y="134" width="30" height="28" class="cell s-z f-z" fill-opacity="0.13"/><rect x="240" y="134" width="30" height="28" class="cell s-z f-z" fill-opacity="0.13"/><rect x="270" y="134" width="30" height="28" class="cell s-z f-z" fill-opacity="0.13"/><rect x="300" y="134" width="30" height="28" class="cell s-z f-z" fill-opacity="0.13"/><rect x="330" y="134" width="30" height="28" class="cell s-z f-z" fill-opacity="0.13"/><rect x="360" y="134" width="30" height="28" class="cell s-z f-z" fill-opacity="0.13"/><g class="opg"><circle cx="480" cy="104" r="14" class="op"/><text x="480" y="108.5" class="t-op" text-anchor="middle">混</text></g><rect x="565" y="85" width="250" height="38" rx="5" class="grp s-z"/><rect x="568" y="88" width="244" height="32" rx="3" class="grp s-z"/><rect x="570" y="90" width="30" height="28" class="cell s-z f-z" fill-opacity="0.10"/><rect x="600" y="90" width="30" height="28" class="cell s-z f-z" fill-opacity="0.10"/><rect x="630" y="90" width="30" height="28" class="cell s-z f-z" fill-opacity="0.95"/><rect x="660" y="90" width="30" height="28" class="cell s-z f-z" fill-opacity="0.10"/><rect x="690" y="90" width="30" height="28" class="cell s-z f-z" fill-opacity="0.10"/><rect x="720" y="90" width="30" height="28" class="cell s-z f-z" fill-opacity="0.10"/><rect x="750" y="90" width="30" height="28" class="cell s-z f-z" fill-opacity="0.10"/><rect x="780" y="90" width="30" height="28" class="cell s-z f-z" fill-opacity="0.10"/><text x="136" y="64" class="t-note" text-anchor="end"><tspan>网络给的概率</tspan></text><text x="136" y="152" class="t-note" text-anchor="end"><tspan>均匀分布</tspan></text><text x="436" y="50" class="t-lab" text-anchor="middle"><tspan>× 99%</tspan></text><text x="436" y="138" class="t-lab" text-anchor="middle"><tspan>× 1%</tspan></text><text x="690" y="76" class="t-cap" text-anchor="middle"><tspan>实际使用的概率</tspan></text><text x="824" y="108" class="t-note" text-anchor="start"><tspan>没有哪一格是 0</tspan></text></svg></div><p class="cap">分类分布如果变得百分之百确定（某一格是 1，其余全是 0），先验和后验之间的误差会出现无穷大，训练会突然崩掉。v3 规定实际使用的概率是网络输出的 99% 加上均匀分布的 1%，于是每一格至少有一点概率。先验、后验和离散动作的策略都这样处理。</p><dl class="eqs"><dt>混合</dt><dd><span class="m"><i>p</i> = 0.99 · <i>p</i><sub>网络</sub> + 0.01 · <i>p</i><sub>均匀</sub></span></dd></dl></section><section class="panel"><h2><b>(e)</b>回报归一化：策略只用一条路，分数先除以回报的范围</h2><div class="scroll"><svg class="fig" viewBox="0 0 1000 236" role="img" aria-label="回报归一化：量出一批分数的范围并做滑动平均，得到 S；策略梯度里的权重除以 max(1, S)。"><defs><marker id="e-mk-r" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-r"/></marker></defs><path d="M160,76 L178.7,76" class="ln ln-r " marker-end="url(#e-mk-r)"/><path d="M355,76 L388.7,76" class="ln ln-r " marker-end="url(#e-mk-r)"/><path d="M485,76 L513.7,76" class="ln ln-r " marker-end="url(#e-mk-r)"/><path d="M620,76 L648.7,76" class="ln ln-r " marker-end="url(#e-mk-r)"/><path d="M730,104 L730,159.7" class="ln ln-r " marker-end="url(#e-mk-r)"/><path d="M355,180 L709.7,180" class="ln ln-r " marker-end="url(#e-mk-r)"/><path d="M744,180 L815.7,180" class="ln ln-r " marker-end="url(#e-mk-r)"/><rect x="20" y="55" width="140" height="42" rx="21" class="pill k-r "/><g class="mod mod-proc"><rect class="body" x="185" y="48" width="170" height="56" rx="5"/><text x="270" y="73" class="t-mod" text-anchor="middle"><tspan>量出范围</tspan></text><text x="270" y="91" class="t-sub" text-anchor="middle"><tspan>第 95 百分位减第 5 百分位</tspan></text></g><g class="mod mod-proc"><rect class="body" x="395" y="48" width="90" height="56" rx="5"/><text x="440" y="73" class="t-mod" text-anchor="middle"><tspan>平滑</tspan></text><text x="440" y="91" class="t-sub" text-anchor="middle"><tspan>滑动平均</tspan></text></g><rect x="520" y="55" width="100" height="42" rx="21" class="pill k-r "/><g class="mod mod-proc"><rect class="body" x="655" y="48" width="150" height="56" rx="5"/><text x="730" y="73" class="t-mod" text-anchor="middle"><tspan>取 max(1, </tspan><tspan class="v">S</tspan><tspan>)</tspan></text><text x="730" y="91" class="t-sub" text-anchor="middle"><tspan>范围很小时不放大</tspan></text></g><rect x="185" y="159" width="170" height="42" rx="21" class="pill k-r "/><g class="opg"><circle cx="730" cy="180" r="14" class="op"/><text x="730" y="184.5" class="t-op" text-anchor="middle">除</text></g><g class="mod mod-net is-train"><rect class="body" x="822" y="152" width="116" height="56" rx="5"/><text x="880" y="177" class="t-mod" text-anchor="middle"><tspan>策略网络</tspan></text><text x="880" y="195" class="t-sub" text-anchor="middle"><tspan>正在更新</tspan></text></g><text x="90" y="74" class="t-symc" text-anchor="middle"><tspan>一批 </tspan><tspan class="v">V</tspan><tspan class="v s" dy="4">λ</tspan></text><text x="90" y="88.18" class="t-dim" text-anchor="middle"><tspan>想象出的所有分数</tspan></text><text x="570" y="74" class="t-sym" text-anchor="middle"><tspan class="v">S</tspan></text><text x="570" y="88.18" class="t-dim" text-anchor="middle"><tspan>回报的范围</tspan></text><text x="270" y="178" class="t-sym" text-anchor="middle"><tspan class="v">V</tspan><tspan class="v s" dy="4">λ</tspan><tspan dy="-4"> − </tspan><tspan class="v">v</tspan></text><text x="270" y="192.2" class="t-dim" text-anchor="middle"><tspan>这个动作比预期好多少</tspan></text><text x="783" y="170" class="t-lab" text-anchor="middle"><tspan>权重</tspan></text><text x="500" y="224" class="t-note" text-anchor="middle"><tspan>离散和连续动作都走这一条路；另加一项熵，权重固定为 </tspan><tspan>3 × 10</tspan><tspan class="s" dy="-5">−4</tspan></text></svg></div><p class="cap">v3 的策略梯度不再穿过世界模型，离散和连续动作都用「这个动作比预期好多少」来加权。问题是这个差值的大小随任务变，熵那一项的权重就得跟着调。v3 的做法是量出一批分数的范围 <span class="m"><i>S</i></span>，把差值除以它。关键在于除的是 <span class="m">max(1, <i>S</i>)</span>：奖励很稀疏、分数都很小的时候不去放大，否则放大的全是噪声。这样熵的权重可以固定。</p><dl class="eqs"><dt>范围</dt><dd><span class="m"><i>S</i> = EMA(Per(<i>V</i><sub><i>λ</i></sub>, 95) − Per(<i>V</i><sub><i>λ</i></sub>, 5), 0.99)</span></dd><dt>策略的损失</dt><dd><span class="m"><i>L</i> = −∑<sub><i>t</i></sub> sg((<i>V</i><sub><i>λ</i></sub> − <i>v</i>(<i>s</i><sub><i>t</i></sub>)) / max(1, <i>S</i>)) · ln <i>π</i>(<i>a</i><sub><i>t</i></sub> | <i>s</i><sub><i>t</i></sub>) − <i>η</i> <i>H</i>(<i>π</i>)</span>，<span class="m"><i>η</i> = 3 × 10<sup>−4</sup></span></dd></dl></section><section class="panel"><h2><b>(f)</b>价值网络：目标自己算，再用慢拷贝拉住</h2><div class="scroll"><svg class="fig" viewBox="0 0 1000 222" role="img" aria-label="价值网络：目标用现在的价值网络算；另外再和一份慢拷贝的输出对一次答案，防止它变得太快。"><defs><marker id="f-mk-ink" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-ink"/></marker><marker id="f-mk-loss" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-loss"/></marker><marker id="f-mk-r" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,1.3 L10,5 L0,8.7 z" class="mk-r"/></marker></defs><path d="M98,70 L145.7,70" class="ln ln-ink " marker-end="url(#f-mk-ink)"/><path d="M268,70 L313.7,70" class="ln ln-r " marker-end="url(#f-mk-r)"/><path d="M60,88 L60,173 Q60,180 67,180 L138.7,180" class="ln ln-ink " marker-end="url(#f-mk-ink)"/><path d="M275,180 L313.7,180" class="ln ln-r " marker-end="url(#f-mk-r)"/><path d="M486.3,70 L658.7,70" class="ln ln-loss dash" marker-end="url(#f-mk-loss)" marker-start="url(#f-mk-loss)"/><path d="M400,100.3 L400,151.7" class="ln ln-loss dash" marker-end="url(#f-mk-loss)" marker-start="url(#f-mk-loss)"/><path d="M60,52 L40,52 A18,18 0 0 0 40,88 L60,88" class="pill k-h"/><path d="M60,52 L80,52 A18,18 0 0 1 80,88 L60,88" class="pill k-z"/><g class="mod mod-net is-train"><rect class="body" x="152" y="42" width="116" height="56" rx="5"/><text x="210" y="67" class="t-mod" text-anchor="middle"><tspan>价值网络</tspan></text><text x="210" y="85" class="t-sub" text-anchor="middle"><tspan>正在更新</tspan></text></g><rect x="320" y="46" width="160" height="48" rx="24" class="pill k-r "/><rect x="323.5" y="49.5" width="153" height="41" rx="20.5" class="pill-in s-r "/><rect x="665" y="49" width="190" height="42" rx="21" class="pill k-r "/><g class="mod mod-net"><rect class="body" x="145" y="152" width="130" height="56" rx="5"/><text x="210" y="177" class="t-mod" text-anchor="middle"><tspan>慢拷贝</tspan></text><text x="210" y="195" class="t-sub" text-anchor="middle"><tspan>参数的滑动平均</tspan></text><rect class="tag" x="153" y="144" width="36" height="16" rx="3"/><text x="171" y="156" class="t-tag" text-anchor="middle">冻结</text></g><rect x="320" y="158" width="160" height="44" rx="22" class="pill k-r "/><rect x="323.5" y="161.5" width="153" height="37" rx="18.5" class="pill-in s-r "/><text x="60" y="75" class="t-sym" text-anchor="middle"><tspan class="v">s</tspan><tspan class="v s" dy="4">τ</tspan></text><text x="400" y="68" class="t-symc" text-anchor="middle"><tspan>255 格上的概率</tspan></text><text x="400" y="83.92" class="t-dim" text-anchor="middle"><tspan>见 (b)</tspan></text><text x="760" y="68" class="t-sym" text-anchor="middle"><tspan class="v">V</tspan><tspan class="v s" dy="4">λ</tspan><tspan dy="-4">(</tspan><tspan class="v">s</tspan><tspan class="v s" dy="4">τ</tspan><tspan dy="-4">)</tspan></text><text x="760" y="82.18" class="t-dim" text-anchor="middle"><tspan>用现在的价值网络算出</tspan></text><text x="400" y="185" class="t-symc" text-anchor="middle"><tspan>拷贝给的概率</tspan></text><text x="572.5" y="60" class="t-loss" text-anchor="middle"><tspan>对答案 ①</tspan></text><text x="412" y="131" class="t-loss" text-anchor="start"><tspan>对答案 ②：别离慢拷贝太远</tspan></text></svg></div><p class="cap">v2 用慢一拍的拷贝来算目标。v3 反过来：目标用现在的价值网络算，这样目标更新得及时；同时让价值网络的输出向一份慢拷贝（参数的滑动平均）的输出靠拢，防止它变得太快。输出的形式是 (b) 里那排格子上的概率。</p><dl class="eqs"><dt>目标</dt><dd><span class="m"><i>V</i><sub><i>λ</i></sub></span> 用现在的价值网络合成，不再用拷贝</dd><dt>两个误差</dt><dd>对 <span class="m"><i>V</i><sub><i>λ</i></sub></span> 的 two-hot 目标的交叉熵，加上对慢拷贝输出的交叉熵</dd></dl></section>
+</figure>
+</main>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+<div class="dlg-head"><h3 id="dlg-title"></h3><button type="button" id="dlg-close">关闭</button></div>
+<div id="dlg-body" class="detail-body"></div>
+</dialog>
+<script>
+(function(){
+  var dlg=document.getElementById('dlg'), body=document.getElementById('dlg-body'), title=document.getElementById('dlg-title');
+  function show(id){
+    var t=document.getElementById(id); if(!t) return;
+    title.textContent=t.getAttribute('data-title');
+    body.innerHTML=t.innerHTML;
+    try{ dlg.showModal(); }catch(e){ dlg.setAttribute('open',''); }
+  }
+  document.querySelectorAll('[data-open]').forEach(function(g){
+    g.addEventListener('click',function(){ show(g.getAttribute('data-open')); });
+    g.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' '){ e.preventDefault(); show(g.getAttribute('data-open')); }
+    });
+  });
+  document.getElementById('dlg-close').addEventListener('click',function(){ dlg.close(); });
+  dlg.addEventListener('click',function(e){ if(e.target===dlg) dlg.close(); });
+})();
+</script>
+</body>
+</html>

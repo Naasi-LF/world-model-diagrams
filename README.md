@@ -1,6 +1,6 @@
 # 世界模型结构图
 
-三篇隐空间世界模型论文的结构图：数据在模块之间怎么传，每个模块怎么训练。
+隐空间世界模型这条线上五篇论文的结构图：数据在模块之间怎么传，每个模块怎么训练。前三篇画完整的结构，后两篇只画相对上一篇的改动。
 
 在线查看：https://naasi-lf.github.io/world-model-diagrams/
 
@@ -9,7 +9,9 @@
 | [World Models](https://naasi-lf.github.io/world-model-diagrams/world-models.html) | Ha 与 Schmidhuber，World Models，2018 |
 | [PlaNet](https://naasi-lf.github.io/world-model-diagrams/planet.html) | Hafner 等，Learning Latent Dynamics for Planning from Pixels，2019 |
 | [Dreamer v1](https://naasi-lf.github.io/world-model-diagrams/dreamer.html) | Hafner 等，Dream to Control: Learning Behaviors by Latent Imagination，2020 |
+| [Dreamer v2 的改动](https://naasi-lf.github.io/world-model-diagrams/dreamer-v2.html) | Hafner 等，Mastering Atari with Discrete World Models，2021 |
+| [Dreamer v3 的改动](https://naasi-lf.github.io/world-model-diagrams/dreamer-v3.html) | Hafner 等，Mastering Diverse Domains through World Models，2023 |
 
-三张图用同一套画法。图里的尺寸和超参数取自各篇论文的附录，并对照了官方代码。带 + 的方框可以点开，看里面每一层的结构。
+所有图用同一套画法。图里的尺寸和超参数取自各篇论文的附录，并对照了官方代码。带 + 的方框可以点开，看里面每一层的结构。
 
 这里的网页由一个 Python 脚本生成，直接打开 HTML 文件也能看。
