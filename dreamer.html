@@ -67,6 +67,8 @@ h1{font-size:31px; font-weight:400; line-height:1.3; margin:0; text-wrap:balance
 .site-nav a{color:var(--muted); text-decoration:none}
 .site-nav a:hover{color:var(--ink); text-decoration:underline}
 .site-nav a[aria-current="page"]{color:var(--ink)}
+.toc-group{display:flex; flex-direction:column; gap:10px}
+.toc-group > h2{font-size:17px; font-weight:400; color:var(--muted); margin:0}
 .toc{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
 .toc li{border-top:1px solid var(--rule); padding-block:20px; display:grid; grid-template-columns:4.5em minmax(0,1fr); gap:4px 20px}
 .toc li:last-child{border-bottom:1px solid var(--rule)}
@@ -178,6 +180,9 @@ svg text{font-family:var(--font); fill:var(--ink)}
 .ln-grad{stroke:var(--loss)} .mk-grad{fill:var(--loss)}
 .dots{stroke-dasharray:1 5.5; stroke-linecap:round; stroke-width:2.6}
 .cell{stroke-width:.7}
+.tile-ol{fill:none; stroke-width:1.6}
+.sg rect{fill:var(--bg); stroke:none}
+.sg line{stroke:var(--ink); stroke-width:1.8}
 .f-img{fill:var(--img)} .f-z{fill:var(--z)} .f-h{fill:var(--h)} .f-a{fill:var(--a)} .f-r{fill:var(--r)} .f-p{fill:var(--p)} .f-n{fill:var(--n)}
 .axis{stroke:var(--mod-line); stroke-width:1; fill:none}
 .sum h2{font-size:20.5px; font-weight:400; margin:0 0 6px}
@@ -193,7 +198,7 @@ svg text{font-family:var(--font); fill:var(--ink)}
 </head>
 <body>
 <main class="page">
-<nav class="site-nav" aria-label="这一组图"><a href="index.html">目录</a><a href="world-models.html">World Models</a><a href="planet.html">PlaNet</a><a href="dreamer.html" aria-current="page">Dreamer v1</a><a href="dreamer-v2.html">Dreamer v2 的改动</a><a href="dreamer-v3.html">Dreamer v3 的改动</a></nav>
+<nav class="site-nav" aria-label="这一组图"><a href="index.html">目录</a><a href="world-models.html">World Models</a><a href="planet.html">PlaNet</a><a href="dreamer.html" aria-current="page">Dreamer v1</a><a href="dreamer-v2.html">Dreamer v2</a><a href="dreamer-v3.html">Dreamer v3</a><a href="ijepa.html">I-JEPA</a></nav>
 <header>
 <h1>Dreamer v1 结构图</h1>
 <p class="lede">Dreamer 的世界模型和 PlaNet 完全一样，变的是怎么选动作：不再每一步规划，而是训练一个策略网络和一个价值网络。两个网络都在世界模型想象出来的轨迹上训练，策略的梯度直接穿过世界模型传回来。</p>

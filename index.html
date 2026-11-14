@@ -67,6 +67,8 @@ h1{font-size:31px; font-weight:400; line-height:1.3; margin:0; text-wrap:balance
 .site-nav a{color:var(--muted); text-decoration:none}
 .site-nav a:hover{color:var(--ink); text-decoration:underline}
 .site-nav a[aria-current="page"]{color:var(--ink)}
+.toc-group{display:flex; flex-direction:column; gap:10px}
+.toc-group > h2{font-size:17px; font-weight:400; color:var(--muted); margin:0}
 .toc{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
 .toc li{border-top:1px solid var(--rule); padding-block:20px; display:grid; grid-template-columns:4.5em minmax(0,1fr); gap:4px 20px}
 .toc li:last-child{border-bottom:1px solid var(--rule)}
@@ -178,6 +180,9 @@ svg text{font-family:var(--font); fill:var(--ink)}
 .ln-grad{stroke:var(--loss)} .mk-grad{fill:var(--loss)}
 .dots{stroke-dasharray:1 5.5; stroke-linecap:round; stroke-width:2.6}
 .cell{stroke-width:.7}
+.tile-ol{fill:none; stroke-width:1.6}
+.sg rect{fill:var(--bg); stroke:none}
+.sg line{stroke:var(--ink); stroke-width:1.8}
 .f-img{fill:var(--img)} .f-z{fill:var(--z)} .f-h{fill:var(--h)} .f-a{fill:var(--a)} .f-r{fill:var(--r)} .f-p{fill:var(--p)} .f-n{fill:var(--n)}
 .axis{stroke:var(--mod-line); stroke-width:1; fill:none}
 .sum h2{font-size:20.5px; font-weight:400; margin:0 0 6px}
@@ -193,12 +198,12 @@ svg text{font-family:var(--font); fill:var(--ink)}
 </head>
 <body>
 <main class="page">
-<nav class="site-nav" aria-label="这一组图"><a href="index.html" aria-current="page">目录</a><a href="world-models.html">World Models</a><a href="planet.html">PlaNet</a><a href="dreamer.html">Dreamer v1</a><a href="dreamer-v2.html">Dreamer v2 的改动</a><a href="dreamer-v3.html">Dreamer v3 的改动</a></nav>
+<nav class="site-nav" aria-label="这一组图"><a href="index.html" aria-current="page">目录</a><a href="world-models.html">World Models</a><a href="planet.html">PlaNet</a><a href="dreamer.html">Dreamer v1</a><a href="dreamer-v2.html">Dreamer v2</a><a href="dreamer-v3.html">Dreamer v3</a><a href="ijepa.html">I-JEPA</a></nav>
 <header>
 <h1>世界模型结构图</h1>
-<p class="lede">隐空间世界模型这条线上五篇论文的结构图：数据在模块之间怎么传，每个模块怎么训练。前三篇画完整的结构，后两篇只画相对上一篇的改动。五张图用同一套画法，按发表顺序读。</p>
+<p class="lede">世界模型两条线上的论文结构图：数据在模块之间怎么传，每个模块怎么训练。Dreamer 这条线把画面还原成像素来对答案，JEPA 这条线只在表征上对答案。所有图用同一套画法，每条线内按发表顺序读；只画改动的那几页，要和上一篇对照着看。</p>
 </header>
-<ol class="toc"><li><span class="yr">2018</span><div><h2><a href="world-models.html">World Models</a></h2><p class="who">Ha 与 Schmidhuber，World Models</p></div><p class="chg">V 把画面压成一小串数 <span class="m"><i>z</i></span>，M 记住历史并猜下一帧，C 根据两者给出动作。三个模块分开训练，C 用进化算法。</p></li><li><span class="yr">2019</span><div><h2><a href="planet.html">PlaNet</a></h2><p class="who">Hafner 等，Learning Latent Dynamics for Planning from Pixels</p></div><p class="chg">RSSM 把记忆 <span class="m"><i>h</i></span> 和随机的 <span class="m"><i>z</i></span> 合在一起往前推，先验负责猜，后验负责看图修正。不训练策略，每一步在模型里搜索动作。</p><p class="chg"><b>相对上一篇</b><span class="m"><i>z</i></span> 和 <span class="m"><i>h</i></span> 合成一个模型一起训练，并预测奖励；用在线规划代替 C。</p></li><li><span class="yr">2020</span><div><h2><a href="dreamer.html">Dreamer v1</a></h2><p class="who">Hafner 等，Dream to Control: Learning Behaviors by Latent Imagination</p></div><p class="chg">世界模型和 PlaNet 相同。策略网络和价值网络都在想象出来的轨迹上训练，策略的梯度穿过世界模型传回来。</p><p class="chg"><b>相对上一篇</b>用策略网络和价值网络代替规划，看得比 15 步更远，出动作也更快。</p></li><li><span class="yr">2021</span><div><h2><a href="dreamer-v2.html">Dreamer v2 的改动</a></h2><p class="who">Hafner 等，Mastering Atari with Discrete World Models</p></div><p class="chg">骨架不变，只画相对 v1 改了的六处：<span class="m"><i>z</i></span> 换成分类变量、直通梯度、KL 平衡、策略梯度的两条路、价值的目标、折扣网络。</p><p class="chg"><b>相对上一篇</b>让同一套方法在 Atari 这种画面复杂、动作离散的任务上也能用。</p></li><li><span class="yr">2023</span><div><h2><a href="dreamer-v3.html">Dreamer v3 的改动</a></h2><p class="who">Hafner 等，Mastering Diverse Domains through World Models</p></div><p class="chg">结构不变，只画相对 v2 改了的六处：symlog、two-hot、两项 KL、均匀混合、回报归一化、价值网络的慢拷贝。</p><p class="chg"><b>相对上一篇</b>不管任务里的数值是大是小，训练都稳，一套超参数跑所有任务。</p></li></ol>
+<section class="toc-group"><h2>Dreamer 这条线：在像素上对答案</h2><ol class="toc"><li><span class="yr">2018</span><div><h2><a href="world-models.html">World Models</a></h2><p class="who">Ha 与 Schmidhuber，World Models</p></div><p class="chg">V 把画面压成一小串数 <span class="m"><i>z</i></span>，M 记住历史并猜下一帧，C 根据两者给出动作。三个模块分开训练，C 用进化算法。</p></li><li><span class="yr">2019</span><div><h2><a href="planet.html">PlaNet</a></h2><p class="who">Hafner 等，Learning Latent Dynamics for Planning from Pixels</p></div><p class="chg">RSSM 把记忆 <span class="m"><i>h</i></span> 和随机的 <span class="m"><i>z</i></span> 合在一起往前推，先验负责猜，后验负责看图修正。不训练策略，每一步在模型里搜索动作。</p><p class="chg"><b>相对上一篇</b><span class="m"><i>z</i></span> 和 <span class="m"><i>h</i></span> 合成一个模型一起训练，并预测奖励；用在线规划代替 C。</p></li><li><span class="yr">2020</span><div><h2><a href="dreamer.html">Dreamer v1</a></h2><p class="who">Hafner 等，Dream to Control: Learning Behaviors by Latent Imagination</p></div><p class="chg">世界模型和 PlaNet 相同。策略网络和价值网络都在想象出来的轨迹上训练，策略的梯度穿过世界模型传回来。</p><p class="chg"><b>相对上一篇</b>用策略网络和价值网络代替规划，看得比 15 步更远，出动作也更快。</p></li><li><span class="yr">2021</span><div><h2><a href="dreamer-v2.html">Dreamer v2</a></h2><p class="who">Hafner 等，Mastering Atari with Discrete World Models</p></div><p class="chg">骨架不变，只画相对 v1 改了的六处：<span class="m"><i>z</i></span> 换成分类变量、直通梯度、KL 平衡、策略梯度的两条路、价值的目标、折扣网络。</p><p class="chg"><b>相对上一篇</b>让同一套方法在 Atari 这种画面复杂、动作离散的任务上也能用。</p></li><li><span class="yr">2023</span><div><h2><a href="dreamer-v3.html">Dreamer v3</a></h2><p class="who">Hafner 等，Mastering Diverse Domains through World Models</p></div><p class="chg">结构不变，只画相对 v2 改了的六处：symlog、two-hot、两项 KL、均匀混合、回报归一化、价值网络的慢拷贝。</p><p class="chg"><b>相对上一篇</b>不管任务里的数值是大是小，训练都稳，一套超参数跑所有任务。</p></li></ol></section><section class="toc-group"><h2>JEPA 这条线：在表征上对答案</h2><ol class="toc"><li><span class="yr">2023</span><div><h2><a href="ijepa.html">I-JEPA</a></h2><p class="who">Assran 等，Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture</p></div><p class="chg">挡住一张图的几块，用看得到的部分去猜被挡住部分的表征，在表征上对答案。目标编码器是上下文编码器的滑动平均，不回传梯度。还没有动作。</p></li></ol></section>
 <footer>图里的尺寸和超参数取自各篇论文的附录，并对照了官方代码。所有图都由同一个脚本生成。</footer>
 </main>
 </body>
