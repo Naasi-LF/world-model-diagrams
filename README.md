@@ -1,6 +1,6 @@
 # 世界模型结构图
 
-世界模型两条线上的论文结构图：数据在模块之间怎么传，每个模块怎么训练。Dreamer 这条线把画面还原成像素来对答案，JEPA 这条线只在表征上对答案。Dreamer v2、v3 两页只画相对上一版的改动。
+世界模型两条线上的论文结构图：数据在模块之间怎么传，每个模块怎么训练。Dreamer 这条线把画面还原成像素来对答案，JEPA 这条线只在表征上对答案。Dreamer v2、v3 和 V-JEPA 系列只画相对上一篇的改动。
 
 在线查看：https://naasi-lf.github.io/world-model-diagrams/
 
@@ -12,6 +12,8 @@
 | [Dreamer v2](https://naasi-lf.github.io/world-model-diagrams/dreamer-v2.html) | Hafner 等，Mastering Atari with Discrete World Models，2021 |
 | [Dreamer v3](https://naasi-lf.github.io/world-model-diagrams/dreamer-v3.html) | Hafner 等，Mastering Diverse Domains through World Models，2023 |
 | [I-JEPA](https://naasi-lf.github.io/world-model-diagrams/ijepa.html) | Assran 等，Self-Supervised Learning from Images with a Joint-Embedding Predictive Architecture，2023 |
+| [V-JEPA 系列](https://naasi-lf.github.io/world-model-diagrams/vjepa.html) | Bardes 等，V-JEPA，2024；Assran 等，V-JEPA 2，2025 |
+| [DINO-WM](https://naasi-lf.github.io/world-model-diagrams/dino-wm.html) | Zhou 等，DINO-WM: World Models on Pre-trained Visual Features enable Zero-shot Planning，2024 |
 
 所有图用同一套画法。图里的尺寸和超参数取自各篇论文的附录，并对照了官方代码。带 + 的方框可以点开，看里面每一层的结构。
 
